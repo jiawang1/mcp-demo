@@ -1,6 +1,6 @@
 applications:
   - name: sf-plu-admin-ui-resource
-    memory: 512M
+    memory: 128M
     random-route: true
     path: .
     buildpacks:
