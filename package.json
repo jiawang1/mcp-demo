@@ -1,5 +1,5 @@
 {
-  "name": "mcp-demo",
+  "name": "sf-plu-admin-ui-resource",
   "version": "1.0.0",
   "description": "Stateless MCP Server with HTTP Stream and SSE support",
   "main": "src/index.js",
@@ -27,5 +27,8 @@
   "devDependencies": {
     "eventsource": "^2.0.2",
     "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": "^20.19.1"
   }
 }

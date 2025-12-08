@@ -1,0 +1,7 @@
+applications:
+  - name: sf-plu-admin-ui-resource
+    memory: 512M
+    random-route: true
+    path: .
+    buildpacks:
+      - nodejs_buildpack
