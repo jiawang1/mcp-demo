@@ -1,42 +1,44 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import express from "express";
-import cors from "cors";
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import express from 'express';
+import cors from 'cors';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
-import { readFile } from "fs/promises";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+} from '@modelcontextprotocol/sdk/types.js';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// For CommonJS compatibility, use process.cwd() and relative paths
+const __dirname = process.cwd();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Session management for SSE connections
-const sessions = new Map();
+const sessions = new Map<string, { server: any; transport: any }>();
 
 // Middleware
 app.use(
   cors({
-    origin: "*",
-    methods: ["POST", "OPTIONS", "GET", "DELETE"],
+    origin: '*',
+    methods: ['POST', 'OPTIONS', 'GET', 'DELETE'],
     allowedHeaders: [
-      "mcp-session-id",
-      "Content-Type",
-      "Accept",
-      "mcp-session-id",
-      "mcp-protocol-version",
+      'mcp-session-id',
+      'Content-Type',
+      'Accept',
+      'mcp-session-id',
+      'mcp-protocol-version',
     ],
-    exposedHeaders: ["mcp-session-id", "mcp-protocol-version"],
+    exposedHeaders: ['mcp-session-id', 'mcp-protocol-version'],
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 
@@ -44,17 +46,17 @@ app.use(express.json());
 // app.options("*", cors());
 
 // Resource paths
-const WIDGET_RESOURCE_PATH = join(__dirname, "resources", "widgetResource.md");
-const PAGE_RESOURCE_PATH = join(__dirname, "resources", "pageResource.md");
+const WIDGET_RESOURCE_PATH = join(__dirname, 'resources', 'widgetResource.md');
+const PAGE_RESOURCE_PATH = join(__dirname, 'resources', 'pageResource.md');
 
 // Tool handlers
 async function handleReadWidget() {
   try {
-    const content = await readFile(WIDGET_RESOURCE_PATH, "utf-8");
+    const content = await readFile(WIDGET_RESOURCE_PATH, 'utf-8');
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: content,
         },
       ],
@@ -63,8 +65,8 @@ async function handleReadWidget() {
     return {
       content: [
         {
-          type: "text",
-          text: `Error reading widget resource: ${error.message}`,
+          type: 'text',
+          text: `Error reading widget resource: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,
@@ -74,11 +76,11 @@ async function handleReadWidget() {
 
 async function handleReadPage() {
   try {
-    const content = await readFile(PAGE_RESOURCE_PATH, "utf-8");
+    const content = await readFile(PAGE_RESOURCE_PATH, 'utf-8');
     return {
       content: [
         {
-          type: "text",
+          type: 'text',
           text: content,
         },
       ],
@@ -87,8 +89,8 @@ async function handleReadPage() {
     return {
       content: [
         {
-          type: "text",
-          text: `Error reading page resource: ${error.message}`,
+          type: 'text',
+          text: `Error reading page resource: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,
@@ -100,14 +102,14 @@ async function handleReadPage() {
 function createMCPServer() {
   const server = new Server(
     {
-      name: "mcp-demo-server",
-      version: "1.0.0",
+      name: 'mcp-demo-server',
+      version: '1.0.0',
     },
     {
       capabilities: {
         tools: {},
       },
-    }
+    },
   );
 
   // Register tools
@@ -115,21 +117,21 @@ function createMCPServer() {
     return {
       tools: [
         {
-          name: "read_widget_resource",
+          name: 'read_widget_resource',
           description:
-            "Reads the content of widgetResource.md file. This file contains widget-related information and documentation.",
+            'Reads the content of widgetResource.md file. This file contains widget-related information and documentation.',
           inputSchema: {
-            type: "object",
+            type: 'object',
             properties: {},
             required: [],
           },
         },
         {
-          name: "read_page_resource",
+          name: 'read_page_resource',
           description:
-            "Reads the content of pageResource.md file. This file contains page-related information and documentation.",
+            'Reads the content of pageResource.md file. This file contains page-related information and documentation.',
           inputSchema: {
-            type: "object",
+            type: 'object',
             properties: {},
             required: [],
           },
@@ -140,20 +142,20 @@ function createMCPServer() {
 
   // Handle tool calls
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
+    const { name } = request.params;
 
     switch (name) {
-      case "read_widget_resource":
+      case 'read_widget_resource':
         return await handleReadWidget();
 
-      case "read_page_resource":
+      case 'read_page_resource':
         return await handleReadPage();
 
       default:
         return {
           content: [
             {
-              type: "text",
+              type: 'text',
               text: `Unknown tool: ${name}`,
             },
           ],
@@ -166,8 +168,8 @@ function createMCPServer() {
 }
 
 // HTTP Streaming endpoint (stateless MCP)
-app.post("/mcp", async (req, res) => {
-  console.log("HTTP streaming request received");
+app.post('/mcp', async (req, res) => {
+  console.log('HTTP streaming request received');
 
   try {
     // Create a new MCP server instance for this request
@@ -178,7 +180,7 @@ app.post("/mcp", async (req, res) => {
       sessionIdGenerator: undefined, // Stateless mode
     });
 
-    res.on("close", () => {
+    res.on('close', () => {
       transport.close();
     });
 
@@ -188,46 +190,20 @@ app.post("/mcp", async (req, res) => {
     // Handle the request
     await transport.handleRequest(req, res, req.body);
 
-    console.log("HTTP streaming request processed successfully");
+    console.log('HTTP streaming request processed successfully');
   } catch (error) {
-    console.error("Error in HTTP streaming endpoint:", error);
+    console.error('Error in HTTP streaming endpoint:', error);
     if (!res.headersSent) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 });
 
-// Also support GET for SSE-style streaming
-// app.get("/mcp", async (req, res) => {
-//   console.log("HTTP streaming GET request received");
-
-//   try {
-//     // Create a new MCP server instance for this request
-//     const server = createMCPServer();
-
-//     // Create HTTP streaming transport in stateless mode
-//     const transport = new StreamableHTTPServerTransport({
-//       sessionIdGenerator: undefined, // Stateless mode
-//     });
-
-//     // Connect server to transport
-//     await server.connect(transport);
-
-//     // Handle the GET request (for SSE streaming)
-//     await transport.handleRequest(req, res);
-
-//     console.log("HTTP streaming GET request processed successfully");
-//   } catch (error) {
-//     console.error("Error in HTTP streaming GET endpoint:", error);
-//     if (!res.headersSent) {
-//       res.status(500).json({ error: error.message });
-//     }
-//   }
-// });
-
 // SSE endpoint (for MCP Inspector)
-app.get("/sse", async (req, res) => {
-  console.log("SSE connection established (for MCP Inspector)");
+app.get('/sse', async (req, res) => {
+  console.log('SSE connection established (for MCP Inspector)');
 
   try {
     // Create a new MCP server instance for this connection
@@ -240,13 +216,13 @@ app.get("/sse", async (req, res) => {
     // Create SSE transport with session-specific message endpoint
     const transport = new SSEServerTransport(
       `/message?sessionId=${sessionId}`,
-      res
+      res,
     );
 
     // Store session before connecting
     sessions.set(sessionId, { server, transport });
     console.log(
-      `Session ${sessionId} stored. Total sessions: ${sessions.size}`
+      `Session ${sessionId} stored. Total sessions: ${sessions.size}`,
     );
 
     // Connect server to transport (this will set up SSE headers and send endpoint event)
@@ -255,39 +231,41 @@ app.get("/sse", async (req, res) => {
     console.log(`Session ${sessionId} connected and ready`);
 
     // Handle client disconnect
-    req.on("close", () => {
+    req.on('close', () => {
       console.log(`SSE connection closed for session ${sessionId}`);
       sessions.delete(sessionId);
       console.log(
-        `Session ${sessionId} removed. Remaining sessions: ${sessions.size}`
+        `Session ${sessionId} removed. Remaining sessions: ${sessions.size}`,
       );
       server.close().catch(console.error);
     });
   } catch (error) {
-    console.error("Error in SSE endpoint:", error);
+    console.error('Error in SSE endpoint:', error);
     if (!res.headersSent) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 });
 
 // POST endpoint for messages (used by SSE transport)
-app.post("/message", async (req, res) => {
-  const sessionId = req.query.sessionId;
+app.post('/message', async (req, res) => {
+  const sessionId = req.query.sessionId as string;
   console.log(`Received message for session: ${sessionId}`);
-  console.log(`Available sessions: ${Array.from(sessions.keys()).join(", ")}`);
+  console.log(`Available sessions: ${Array.from(sessions.keys()).join(', ')}`);
 
   // Validate session ID
   if (!sessionId) {
-    console.error("Missing sessionId in request");
-    return res.status(400).json({ error: "Missing sessionId parameter" });
+    console.error('Missing sessionId in request');
+    return res.status(400).json({ error: 'Missing sessionId parameter' });
   }
 
   const session = sessions.get(sessionId);
   if (!session) {
     console.error(`Session not found: ${sessionId}`);
-    console.log(`Current sessions: ${Array.from(sessions.keys()).join(", ")}`);
-    return res.status(404).json({ error: "Session not found" });
+    console.log(`Current sessions: ${Array.from(sessions.keys()).join(', ')}`);
+    return res.status(404).json({ error: 'Session not found' });
   }
 
   console.log(`Processing message for session ${sessionId}`);
@@ -299,78 +277,80 @@ app.post("/message", async (req, res) => {
   } catch (error) {
     console.error(`Error handling message for session ${sessionId}:`, error);
     if (!res.headersSent) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 });
 
 // Health check endpoint
-app.get("/health", (req, res) => {
+app.get('/health', (req, res) => {
   res.json({
-    status: "ok",
-    server: "mcp-demo",
-    version: "1.0.0",
-    transports: ["http-streaming", "sse"],
+    status: 'ok',
+    server: 'mcp-demo',
+    version: '1.0.0',
+    transports: ['http-streaming', 'sse'],
     endpoints: {
-      mcp: "/mcp",
-      sse: "/sse",
-      message: "/message",
-      health: "/health",
+      mcp: '/mcp',
+      sse: '/sse',
+      message: '/message',
+      health: '/health',
     },
   });
 });
 
 // Root endpoint with information
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   res.json({
-    name: "MCP Demo Server",
-    description: "MCP Server with HTTP Streaming and SSE support",
-    version: "1.0.0",
-    transports: ["http-streaming", "sse"],
+    name: 'MCP Demo Server',
+    description: 'MCP Server with HTTP Streaming and SSE support',
+    version: '1.0.0',
+    transports: ['http-streaming', 'sse'],
     endpoints: {
       mcp: {
-        path: "/mcp",
-        method: "POST",
-        transport: "http-streaming",
-        description: "HTTP streaming endpoint for stateless MCP communication",
+        path: '/mcp',
+        method: 'POST',
+        transport: 'http-streaming',
+        description: 'HTTP streaming endpoint for stateless MCP communication',
       },
       sse: {
-        path: "/sse",
-        method: "GET",
-        transport: "sse",
-        description: "SSE endpoint for MCP Inspector",
+        path: '/sse',
+        method: 'GET',
+        transport: 'sse',
+        description: 'SSE endpoint for MCP Inspector',
       },
       message: {
-        path: "/message",
-        method: "POST",
-        transport: "sse",
-        description: "Message endpoint for SSE transport",
+        path: '/message',
+        method: 'POST',
+        transport: 'sse',
+        description: 'Message endpoint for SSE transport',
       },
       health: {
-        path: "/health",
-        method: "GET",
-        description: "Health check endpoint",
+        path: '/health',
+        method: 'GET',
+        description: 'Health check endpoint',
       },
     },
     tools: [
       {
-        name: "read_widget_resource",
-        description: "Reads the content of widgetResource.md file",
+        name: 'read_widget_resource',
+        description: 'Reads the content of widgetResource.md file',
       },
       {
-        name: "read_page_resource",
-        description: "Reads the content of pageResource.md file",
+        name: 'read_page_resource',
+        description: 'Reads the content of pageResource.md file',
       },
     ],
   });
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error("Error:", err);
+app.use((err: any, req: express.Request, res: express.Response) => {
+  console.error('Error:', err);
   res.status(500).json({
-    error: "Internal Server Error",
-    message: err.message,
+    error: 'Internal Server Error',
+    message: err instanceof Error ? err.message : String(err),
   });
 });
 
