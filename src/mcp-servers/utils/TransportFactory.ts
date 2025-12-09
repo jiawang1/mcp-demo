@@ -63,7 +63,8 @@ export class TransportFactory {
       throw new Error(`Unsupported transport type: ${type}`);
     }
 
-    let transport: StreamableHTTPServerTransport | SSEServerTransport = null;
+    let transport: StreamableHTTPServerTransport | SSEServerTransport | null =
+      null;
 
     /**
      * create streamable http transport
@@ -76,7 +77,7 @@ export class TransportFactory {
         sessionIdGenerator: sessionIdGenerator || (() => crypto.randomUUID()),
         onsessioninitialized: (sessionId) => {
           console.log(`Session initialized: ${sessionId}`);
-          setTransport(sessionId, transport);
+          setTransport(sessionId, transport!);
           onsessioninitialized && onsessioninitialized(sessionId);
         },
         ...otherOps,
@@ -111,8 +112,8 @@ export class TransportFactory {
       setTransport(transport.sessionId, transport);
     }
 
-    TransportFactory.onCloseTransport(transport);
+    TransportFactory.onCloseTransport(transport!);
 
-    return transport;
+    return transport!;
   }
 }

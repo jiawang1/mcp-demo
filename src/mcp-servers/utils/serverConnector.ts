@@ -1,5 +1,5 @@
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 export const connect = async (transport: Transport, server: McpServer) => {
   try {

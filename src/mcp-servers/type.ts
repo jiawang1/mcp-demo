@@ -1,5 +1,5 @@
 import express from 'express';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 export type MCPServerConfig = {
   route: string;

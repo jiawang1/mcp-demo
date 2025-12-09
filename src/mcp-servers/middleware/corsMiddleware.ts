@@ -1,5 +1,5 @@
 import * as express from 'express';
-import * as cors from 'cors';
+import cors from 'cors';
 import { MCP_SESSION_ID } from '../../mcp-servers/utils/constant';
 
 const applyMiddleware = (app: express.Express) => {

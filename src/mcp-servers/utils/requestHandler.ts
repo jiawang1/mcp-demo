@@ -1,5 +1,3 @@
-import { wrapResponse } from './wrapResponse';
-
 const resCache = new Map();
 let count = 0;
 
@@ -7,12 +5,12 @@ export const handleRes = (req, res, transport) => {
   const previousCount = count;
   count++;
   const currntCount = count;
-  let resolve = null;
+  let resolve: ((val?: unknown) => void) | null = null;
   resCache.set(currntCount, new Promise((res) => (resolve = res)));
 
   const cleandUp = () => {
     // console.log('Cleaning up response:');
-    resolve();
+    resolve?.();
     resCache.delete(currntCount);
   };
 
@@ -51,8 +49,6 @@ export const handleRes = (req, res, transport) => {
   });
 
   if (resCache.get(previousCount) && req.method === 'GET') {
-    debugger;
-    console.log(req.method, req.path, req.body, '  $$$$$$$$$$$$$$$$$$');
     resCache.get(previousCount).then(() => {
       console.log(
         '********* request start, previousCount:',
@@ -60,7 +56,7 @@ export const handleRes = (req, res, transport) => {
         'currentCount:',
         currntCount,
       );
-      debugger;
+
       transport.handleRequest(req, res, req.body);
     });
   } else {

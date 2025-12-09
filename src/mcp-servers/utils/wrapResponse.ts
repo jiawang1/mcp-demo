@@ -65,6 +65,7 @@ export function wrapResponse(res, myCloseHandler) {
     } else {
       originalRemove(event, listener);
     }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return res;
   };
   res.off = res.removeListener;
